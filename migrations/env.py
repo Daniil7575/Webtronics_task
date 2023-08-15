@@ -13,6 +13,7 @@ from alembic import context
 
 from src.database import Base
 from src.auth.models import *
+from src.posts.models import *
 from src import settings
 
 # this is the Alembic Config object, which provides

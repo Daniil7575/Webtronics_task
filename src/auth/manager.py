@@ -1,5 +1,5 @@
 from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, UUIDIDMixin
+from fastapi_users import BaseUserManager, UUIDIDMixin, schemas, models, exceptions
 
 import uuid
 from typing import Optional
