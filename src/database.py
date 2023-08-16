@@ -2,9 +2,10 @@ from typing import Any, AsyncGenerator, Dict
 from sqlalchemy import inspect
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, declarative_base, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 import settings
+
 
 DATABASE_URL = f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 
@@ -14,7 +15,7 @@ class Base(DeclarativeBase):
         """
         Convert SQLAlchemy model object to a dict.
 
-        :returns: A dict with column name as a key and value as column values.
+        :returns: A dict with column name as a key and column values as a value.
         """
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
 

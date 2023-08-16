@@ -1,10 +1,16 @@
-from fastapi import Depends, FastAPI
+import logging
 
-from auth.base_config import auth_backend, current_user, fastapi_users
+from fastapi import FastAPI
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from redis import asyncio as aioredis
+import uvicorn
+
+from auth.base_config import auth_backend, fastapi_users
 from auth.schemas import UserCreate, UserRead
 from posts.router import router
+from cache_base import redis_client
 
-import logging
 
 logging.basicConfig()
 logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
@@ -21,6 +27,13 @@ app.include_router(
     tags=["auth"],
 )
 
-app.include_router(
-    router
-)
+app.include_router(router)
+
+
+@app.on_event("startup")
+async def startup_event():
+    await redis_client.connect_redis()
+    # print(await redis_client.redis.get("a"))
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

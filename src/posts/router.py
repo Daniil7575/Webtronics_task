@@ -1,17 +1,24 @@
 from typing import Any, Dict
-from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import settings
 from auth.base_config import current_user
 from auth.models import User
 from database import get_async_session
 from posts import service
+from posts.cache import update_cache_reactions
 from posts.dependencies import reaction_common_params, validate_id
-from posts.exceptions import reaction_on_yourself, user_not_owner
+from posts.exceptions import (
+    reaction_on_reacted_post,
+    reaction_on_yourself,
+    user_not_owner,
+)
 from posts.models import ReactionType
 from posts.schemas import CreatePost, EditPost
+from cache_base import build_key
+
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -42,7 +49,7 @@ async def edit_post(
     edit_post_data: EditPost,
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_user),
-    post_id: UUID = Depends(validate_id),
+    post_id: str = Depends(validate_id),
 ):
     post = await service.get_post(post_id, session)
     if post.owner_id != user.id:
@@ -61,7 +68,7 @@ async def edit_post(
 async def delete_post(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_user),
-    post_id: UUID = Depends(validate_id),
+    post_id: str = Depends(validate_id),
 ):
     post = await service.get_post(post_id, session)
     if post.owner_id != user.id:
@@ -77,10 +84,20 @@ async def delete_post(
 @router.get("/{post_id}")
 async def get_post(
     session: AsyncSession = Depends(get_async_session),
-    post_id: UUID = Depends(validate_id),
+    post_id: str = Depends(validate_id),
 ):
     post = await service.get_post(post_id, session)
-    return {"status": "success", "data": post._asdict(), "details": None}
+
+    post_dict = post._asdict()
+    post_dict["reactions"] = await service.get_reactions(post, session)
+
+    if settings.USE_CACHE:
+        # Refresh cache.
+        await update_cache_reactions(
+            post_dict["reactions"], cache_key=build_key("reactions", str(post.id))
+        )
+
+    return {"status": "success", "data": post_dict, "details": None}
 
 
 @router.post("/{post_id}/like")
@@ -94,12 +111,28 @@ async def like_post(params: Dict[str, Any] = Depends(reaction_common_params)):
 
 
 async def react_on_post(
-    session: AsyncSession, user: User, post_id: UUID, reaction: ReactionType
+    session: AsyncSession, user: User, post_id: str, reaction: ReactionType
 ):
+    user_id = str(user.id)
     post = await service.get_post(post_id, session)
-    if post.owner_id == user.id:
+    if post.owner_id == user_id:
         raise reaction_on_yourself()
-    await service.new_reaction(post, user.id, session, reaction)
+
+    reactions = await service.get_reactions(post, session)
+    # Checking whether the user reacted to this post
+    for reacted_users in reactions.values():
+        if user_id in reacted_users:
+            raise reaction_on_reacted_post()
+
+    await service.new_reaction(post, user_id, session, reaction, reactions)
+
+    if settings.USE_CACHE:
+        # Modify cache.
+        print(reactions)
+        await update_cache_reactions(
+            reactions, cache_key=build_key("reactions", post_id)
+        )
+
     return {
         "status": "success",
         "data": None,

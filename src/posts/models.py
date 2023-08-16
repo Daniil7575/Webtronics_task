@@ -38,4 +38,4 @@ class Post(Base):
     last_update_date: Mapped[datetime] = mapped_column(
         TIMESTAMP, server_default=func.now(), onupdate=func.now()
     )
-    user_reactions: Mapped[Set["Reaction"]] = relationship(lazy="selectin")
+    user_reactions: Mapped[Set["Reaction"]] = relationship()

@@ -16,12 +16,12 @@ def validate_id(post_id: str) -> UUID:
     :param post_id: Post id in db.
     :raises HTTPException: Post id cannot be converted to UUID.
     """
-    print(post_id)
     try:
         # Trying to convert given post_id to UUID
-        post_id = UUID(post_id)
+        UUID(post_id)
     except ValueError:
         raise invalid_post_id()
+    print(post_id, "\n\n")
     return post_id
 
 
@@ -30,4 +30,12 @@ async def reaction_common_params(
     user: User = Depends(current_user),
     post_id: UUID = Depends(validate_id),
 ):
+    """
+    Common arguments needed for actions with post reactions.
+
+    :param session: SQLAlchemy session for querying.
+    :param user: A User object.
+    :param post_id: Post id in db.
+    :returns: A dictionary with given params.
+    """
     return {"session": session, "user": user, "post_id": post_id}
