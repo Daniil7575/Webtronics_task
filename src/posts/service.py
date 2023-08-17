@@ -10,9 +10,11 @@ import settings
 from cache_base import build_key, redis_client
 from posts.exceptions import empty_post_update_data, post_not_found
 from posts.models import Post, Reaction, ReactionType
+import logging
 
 
 MAX_POSTS_COUNT_PER_PAGE = 10
+logger = logging.getLogger("uvicorn")
 
 
 async def create_post(post_data: dict, user_id: str, session: AsyncSession) -> Post:
@@ -31,7 +33,9 @@ async def create_post(post_data: dict, user_id: str, session: AsyncSession) -> P
     )
     post = await session.execute(stmt)
     await session.commit()
-    return post.first()
+    post = post.first()
+    logger.info(f"Post {post.id} created")
+    return post
 
 
 async def get_post(post_id: str, session: AsyncSession) -> Post:
@@ -51,7 +55,7 @@ async def get_post(post_id: str, session: AsyncSession) -> Post:
     return post
 
 
-async def update_post(post: Post, new_post_data: dict, session: AsyncSession) -> None:
+async def update_post(post_id: str, new_post_data: dict, session: AsyncSession) -> None:
     """
     Updates post.
 
@@ -63,13 +67,14 @@ async def update_post(post: Post, new_post_data: dict, session: AsyncSession) ->
     # Checking if user given data is empty
     if not new_post_data:
         raise empty_post_update_data()
-    stmt = sa.update(Post).where(Post.id == post.id).values(**new_post_data)
+    stmt = sa.update(Post).where(Post.id == post_id).values(**new_post_data)
     await session.execute(stmt)
     await session.commit()
+    logger.info(f"Post {post_id} updated")
 
 
 async def new_reaction(
-    post: Post,
+    post_id: str,
     user_id: str,
     session: AsyncSession,
     reaction: ReactionType,
@@ -89,9 +94,10 @@ async def new_reaction(
 
     reactions[reaction.name].add(user_id)
 
-    stmt = sa.insert(Reaction).values(user_id=user_id, post_id=post.id, type=reaction)
+    stmt = sa.insert(Reaction).values(user_id=user_id, post_id=post_id, type=reaction)
     await session.execute(stmt)
     await session.commit()
+    logger.log(f"{reaction.name.capitalize()} on Post {post_id}")
 
 
 async def delete_post(post_id: str, session: AsyncSession) -> None:
@@ -104,6 +110,7 @@ async def delete_post(post_id: str, session: AsyncSession) -> None:
     stmt = sa.delete(Post).where(Post.id == post_id)
     await session.execute(stmt)
     await session.commit()
+    logger.info(f"Post {post_id} deleted")
 
 
 async def get_posts(skip: int, session: AsyncSession) -> List[Dict[str, Any]]:

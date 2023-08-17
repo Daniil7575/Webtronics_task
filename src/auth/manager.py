@@ -1,30 +1,36 @@
-from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, UUIDIDMixin, schemas, models, exceptions
-
+import logging
 import uuid
 from typing import Optional
 
+from fastapi import Depends, Request, Response
+from fastapi_users import BaseUserManager, UUIDIDMixin
+
+import settings
 from auth.models import User
 from auth.utils import get_user_db
-import settings
+
+
+logger = logging.getLogger("uvicorn")
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = settings.SECRET
     verification_token_secret = settings.SECRET
 
-    async def on_after_register(self, user: User, request: Optional[Request] = None):
-        print(f"User {user.id} has registered.")
-
-    async def on_after_forgot_password(
-        self, user: User, token: str, request: Optional[Request] = None
+    async def on_after_register(
+        self,
+        user: User,
+        request: Optional[Request] = None,
     ):
-        print(f"User {user.id} has forgot their password. Reset token: {token}")
+        logger.info(f"User {user.id} has registered.")
 
-    async def on_after_request_verify(
-        self, user: User, token: str, request: Optional[Request] = None
+    async def on_after_login(
+        self,
+        user: User,
+        request: Optional[Request] = None,
+        response: Optional[Response] = None,
     ):
-        print(f"Verification requested for user {user.id}. Verification token: {token}")
+        logger.info(f"User {user.id} has logged in.")
 
 
 async def get_user_manager(user_db=Depends(get_user_db)):

@@ -21,7 +21,6 @@ def validate_id(post_id: str) -> UUID:
         UUID(post_id)
     except ValueError:
         raise invalid_post_id()
-    print(post_id, "\n\n")
     return post_id
 
 
