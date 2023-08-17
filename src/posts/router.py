@@ -25,6 +25,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 
 @router.get("")
 async def get_posts(session: AsyncSession = Depends(get_async_session), skip: int = 0):
+    """Get post list."""
     posts = await service.get_posts(skip, session)
     return {"status": "success", "data": posts, "details": None}
 
@@ -35,6 +36,7 @@ async def create_post(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_user),
 ):
+    """Create a new post."""
     post = await service.create_post(post_data.model_dump(), user.id, session)
     return {
         "status": "success",
@@ -48,6 +50,7 @@ async def get_post(
     session: AsyncSession = Depends(get_async_session),
     post_id: str = Depends(validate_id),
 ):
+    """Get specific post."""
     post = await service.get_post(post_id, session)
 
     post_dict = post._asdict()
@@ -69,6 +72,7 @@ async def edit_post(
     user: User = Depends(current_user),
     post_id: str = Depends(validate_id),
 ):
+    """Update post."""
     post = await service.get_post(post_id, session)
 
     if post.owner_id != user.id:
@@ -89,6 +93,7 @@ async def delete_post(
     user: User = Depends(current_user),
     post_id: str = Depends(validate_id),
 ):
+    """Delete post."""
     post = await service.get_post(post_id, session)
     if post.owner_id != user.id:
         raise user_not_owner()
@@ -102,17 +107,27 @@ async def delete_post(
 
 @router.post("/{post_id}/like")
 async def like_post(params: Dict[str, Any] = Depends(reaction_common_params)):
+    """Add like to a post."""
     return await react_on_post(**params, reaction=ReactionType.like)
 
 
 @router.post("/{post_id}/dislike")
 async def dislike_post(params: Dict[str, Any] = Depends(reaction_common_params)):
+    """Add dislike to a post."""
     return await react_on_post(**params, reaction=ReactionType.dislike)
 
 
 async def react_on_post(
     session: AsyncSession, user: User, post_id: str, reaction: ReactionType
 ):
+    """
+    Add reaction to a post.
+
+    :param session: SQLAlchemy session for querying.
+    :param user: A User object.
+    :param post_id: Post id in db.
+    :param reaction: User's reaction on the post.
+    """
     user_id = str(user.id)
     post = await service.get_post(post_id, session)
 
@@ -136,5 +151,5 @@ async def react_on_post(
     return {
         "status": "success",
         "data": None,
-        "details": f"Successfully {reaction.name} post!",
+        "details": f"Successfully '{reaction.name}' post!",
     }

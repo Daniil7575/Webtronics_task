@@ -59,7 +59,7 @@ async def update_post(post_id: str, new_post_data: dict, session: AsyncSession) 
     """
     Updates post.
 
-    :param post: Post object.
+    :param post_id: Post id in db.
     :param new_post_data: A dictionary with updatable user filled dields.
     :param session: SQLAlchemy session for querying.
     :raises HTTPException: The User did not provide any data.
@@ -83,7 +83,7 @@ async def new_reaction(
     """
     Add new reaction to the post.
 
-    :param post: Post object.
+    :param post_id: Post id in db.
     :param user_id: User id in db.
     :param session: SQLAlchemy session for querying.
     :param reaction: User's reaction on the post.
@@ -97,7 +97,7 @@ async def new_reaction(
     stmt = sa.insert(Reaction).values(user_id=user_id, post_id=post_id, type=reaction)
     await session.execute(stmt)
     await session.commit()
-    logger.log(f"{reaction.name.capitalize()} on Post {post_id}")
+    logger.info(f"{reaction.name.capitalize()} on Post {post_id}")
 
 
 async def delete_post(post_id: str, session: AsyncSession) -> None:
@@ -117,7 +117,8 @@ async def get_posts(skip: int, session: AsyncSession) -> List[Dict[str, Any]]:
     """
     Get list of posts.
 
-    :param skip: Offset criterion in selection of posts.  Should be a multiple of a page size.
+    :param skip: Offset criterion in selection of posts. 
+    Should be a multiple of MAX_POSTS_COUNT_PER_PAGE.
     :param session: SQLAlchemy session for querying.
     :returns: A list with posts presented in the form of dict.
     """
