@@ -1,0 +1,34 @@
+version: '3.9'
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile.api
+    command: bash -c "alembic upgrade head
+            && cd src 
+            && python3 main.py"
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    links:
+      - db
+      - cache
+  db:
+    image: postgres:15
+    build: 
+      dockerfile: Dockerfile.PostgreSQL
+    ports: 
+      - 8080:8080
+    environment:
+      - POSTGRES_DB_NAME=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_HOST=${DB_HOST}
+      - POSTGRES_PORT=${DB_PORT}
+  cache:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - 6379:6379
+    command: redis-server --loglevel warning

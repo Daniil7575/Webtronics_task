@@ -17,6 +17,7 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 
 # Redis
 REDIS_URL = os.getenv("REDIS_URL")
+REDIS_PORT = os.getenv("REDIS_PORT")
 
 # ---------- non-Confidential ----------
 # Caching
