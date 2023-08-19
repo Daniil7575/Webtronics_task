@@ -14,8 +14,8 @@ logger = logging.getLogger("uvicorn")
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
-    reset_password_token_secret = settings.SECRET
-    verification_token_secret = settings.SECRET
+    reset_password_token_secret = settings.JWT_SECRET
+    verification_token_secret = settings.JWT_SECRET
 
     async def on_after_register(
         self,
