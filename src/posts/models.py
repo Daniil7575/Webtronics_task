@@ -21,7 +21,7 @@ class Reaction(Base):
 
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
     post_id: Mapped[UUID] = mapped_column(ForeignKey("post.id", ondelete="cascade"), primary_key=True)
-    type: Mapped[Enum[ReactionType]] = mapped_column(Enum(ReactionType))
+    type_: Mapped[Enum[ReactionType]] = mapped_column(Enum(ReactionType))
 
 
 class Post(Base):
