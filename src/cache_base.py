@@ -4,7 +4,7 @@ from redis import asyncio as aioredis
 import settings
 
 
-class RedisClient():
+class RedisClient:
     def __init__(self, url: str) -> None:
         self.redis = None
         self.url = url
