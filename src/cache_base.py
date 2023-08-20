@@ -10,7 +10,7 @@ class RedisClient():
         self.url = url
     
     async def connect_redis(self) -> None:
-        self.redis = await aioredis.from_url(self.url, encoding="utf8")
+        self.redis = await aioredis.from_url(f"redis://{self.url}", encoding="utf8")
         FastAPICache.init(RedisBackend(self.redis), prefix="fastapi-cache")
 
 

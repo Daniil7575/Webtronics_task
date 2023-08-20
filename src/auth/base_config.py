@@ -14,7 +14,7 @@ from auth.models import User
 
 LIFETIME_SEC = 3600
 
-cookie_transport = CookieTransport(cookie_max_age=LIFETIME_SEC)
+cookie_transport = CookieTransport(cookie_max_age=LIFETIME_SEC, cookie_secure=False)
 
 
 def get_jwt_strategy() -> JWTStrategy:

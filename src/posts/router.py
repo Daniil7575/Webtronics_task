@@ -135,6 +135,11 @@ async def react_on_post(
         raise reaction_on_yourself()
 
     reactions = await service.get_reactions(post, session)
+    if settings.USE_CACHE:
+        # Refresh cache.
+        await update_cache_reactions(
+            reactions, cache_key=build_key("reactions", str(post.id))
+        )
     # Checking whether the user reacted to this post.
     for reacted_users in reactions.values():
         if user_id in reacted_users:
