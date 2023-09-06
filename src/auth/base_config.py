@@ -14,6 +14,7 @@ from auth.models import User
 
 LIFETIME_SEC = 3600
 
+# cookie_secure=Fasle - only for correct working as demo project
 cookie_transport = CookieTransport(cookie_max_age=LIFETIME_SEC, cookie_secure=False)
 
 
